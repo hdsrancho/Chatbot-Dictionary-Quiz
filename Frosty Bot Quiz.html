@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frosty Bot Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{--sky:#dcefe3;--sky2:#f6fbf7;--panel:#fffdf9;--line:#1d3b2b;--text:#1d3b2b;--bot:#fff;--me:#f7cfcf;--ok:#9be0a8;--no:#f4a3a3;--lamp:#ffd36b;--bar:#1f6b45;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sky:#0b1c14;--sky2:#143023;--panel:#122a1e;--line:#e7c76a;--text:#f4fff7;--bot:#1e4430;--me:#6b2a31;--ok:#2f7a45;--no:#8a3a3a;--bar:#0f3d28;color-scheme:dark}}
+:root[data-theme="dark"]{--sky:#0b1c14;--sky2:#143023;--panel:#122a1e;--line:#e7c76a;--text:#f4fff7;--bot:#1e4430;--me:#6b2a31;--ok:#2f7a45;--no:#8a3a3a;--bar:#0f3d28;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{display:flex;padding:16px 16px 44px;background:linear-gradient(var(--sky2),var(--sky));font-family:"VT323","Courier New",monospace;font-size:22px;color:var(--text)}
+.ground{position:fixed;left:0;right:0;bottom:0;height:28px;background:#fff;border-top:8px solid #dcefff;z-index:0}
+.flake{position:fixed;top:0;background:#fff;z-index:0;pointer-events:none;animation:fall linear infinite;animation-timing-function:steps(48)}
+@keyframes fall{from{transform:translate3d(0,-10vh,0)}to{transform:translate3d(var(--dx),110vh,0)}}
+@media (prefers-reduced-motion:reduce){.flake{animation:none;top:var(--y)}}
+.app{position:relative;z-index:1;margin:auto;width:min(680px,100%);height:min(740px,100%);display:flex;flex-direction:column;background:var(--panel);border:4px solid var(--line);box-shadow:8px 8px 0 var(--line)}
+header{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--bar);color:#fff}
+header svg{width:56px;height:56px;flex:none;shape-rendering:crispEdges}
+h1{margin:0 0 8px;font:12px/1.4 "Press Start 2P","Courier New",monospace}
+.sub{margin:0;font-size:20px;color:#d8f5e2}
+.lights{flex:none;height:14px;border-bottom:4px solid var(--line);background:repeating-linear-gradient(90deg,#e63946 0 12px,var(--panel) 12px 20px,#ffd36b 20px 32px,var(--panel) 32px 40px,#3fa66a 40px 52px,var(--panel) 52px 60px);animation:twinkle 1.2s steps(1) infinite}
+@keyframes twinkle{50%{background-position:20px 0}}
+@media (prefers-reduced-motion:reduce){.lights{animation:none}}
+.stat{margin-left:auto;text-align:right;font:9px/1.8 "Press Start 2P","Courier New",monospace}
+#bar{display:flex;gap:3px;margin-top:6px;justify-content:flex-end}
+#bar i{width:10px;height:10px;background:#164d33}
+#bar i.on{background:var(--lamp)}
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.msg{max-width:88%;padding:10px 12px;border:4px solid var(--line);line-height:1.15}
+.msg p{margin:0}
+.bot{align-self:flex-start;background:var(--bot);box-shadow:4px 4px 0 var(--line)}
+.me{align-self:flex-end;background:var(--me);box-shadow:-4px 4px 0 var(--line)}
+pre{margin:8px 0 0;padding:8px 10px;background:#0c1f16;color:#d8f5e2;font:inherit;white-space:pre-wrap;overflow-x:auto}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+button,input{font:inherit;color:var(--text)}
+.opt,.go{background:var(--bot);border:4px solid var(--line);box-shadow:4px 4px 0 var(--line);padding:8px 10px;cursor:pointer;text-align:left}
+.opt:active:not(:disabled),.go:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--line)}
+.opt:disabled{cursor:default}
+.opt.ok{background:var(--ok)}
+.opt.no{background:var(--no)}
+footer{padding:12px 16px 16px;border-top:4px solid var(--line)}
+form{display:flex;gap:10px}
+input{flex:1;min-width:0;padding:8px 10px;background:var(--bot);border:4px solid var(--line);border-radius:0}
+input:disabled{opacity:.55}
+.go{font:10px "Press Start 2P","Courier New",monospace;text-align:center}
+.go:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:4px solid var(--lamp);outline-offset:2px}
+@media (max-width:480px){body{font-size:20px;padding:8px 8px 40px}.sub{display:none}.msg{max-width:94%}}
+</style>
+</head>
+<body>
+<div class="ground"></div>
+<main class="app">
+  <header>
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <rect x="6" y="0" width="4" height="1" fill="#e63946"/><rect x="5" y="1" width="6" height="1" fill="#e63946"/><rect x="10" y="0" width="2" height="1" fill="#fff"/><rect x="4" y="2" width="8" height="1" fill="#fff"/>
+      <rect x="5" y="3" width="6" height="4" fill="#fff"/><rect x="4" y="4" width="8" height="2" fill="#fff"/>
+      <rect x="6" y="4" width="1" height="1" fill="#0b1329"/><rect x="9" y="4" width="1" height="1" fill="#0b1329"/>
+      <rect x="7" y="5" width="3" height="1" fill="#ff9a3c"/>
+      <rect x="5" y="7" width="6" height="1" fill="#d94f4f"/><rect x="10" y="8" width="1" height="2" fill="#d94f4f"/>
+      <rect x="5" y="8" width="6" height="2" fill="#fff"/>
+      <rect x="1" y="8" width="3" height="1" fill="#8a5a2b"/><rect x="12" y="8" width="3" height="1" fill="#8a5a2b"/>
+      <rect x="3" y="10" width="10" height="5" fill="#fff"/><rect x="2" y="11" width="12" height="3" fill="#fff"/>
+      <rect x="7" y="11" width="1" height="1" fill="#0b1329"/><rect x="7" y="13" width="1" height="1" fill="#0b1329"/>
+    </svg>
+    <div>
+      <h1>Frosty Bot</h1>
+      <p class="sub">Merry Python chatbot quiz</p>
+    </div>
+    <div class="stat"><div id="score">Score 0</div><div id="bar" aria-hidden="true"></div></div>
+  </header>
+  <div class="lights" aria-hidden="true"></div>
+  <section id="log" aria-live="polite"></section>
+  <footer>
+    <form id="f" autocomplete="off">
+      <input id="in" type="text" aria-label="Your answer" disabled>
+      <button class="go" id="send" type="submit" disabled>Send</button>
+    </form>
+  </footer>
+</main>
+<script>
+(function(){
+  var Q=[
+    {t:"btn",q:"What does a chatbot do?",opts:["Reads a user’s message and sends back a reply","Repairs computer hardware","Only stores files offline","Only draws pictures"],a:0,why:"A chatbot takes a message in and gives a reply back."},
+    {t:"btn",q:"What does this print?",code:'replies = {"hi": "hello"}\nprint(replies["hi"])',opts:["hello","hi","KeyError","None"],a:0,why:'The key "hi" maps to the value "hello".'},
+    {t:"txt",q:"Type the output.",code:'print("HeLLo".lower())',a:["hello"],show:"hello",why:"lower() turns every letter into lowercase."},
+    {t:"btn",q:"A chatbot lowercases the user’s message before checking the dictionary. Why?",code:'msg = input().lower()',opts:["So Hi and hi match the same key","To make the text bigger","To add a new key","To delete the message"],a:0,why:"Dictionary keys are case sensitive, so lower() keeps matching simple."},
+    {t:"txt",q:"Type the output.",code:'print("  hi there  ".strip())',a:["hi there"],show:"hi there",why:"strip() removes spaces from both ends."},
+    {t:"btn",q:"Which line checks if the user typed the word price?",code:'text = "what is the price"',opts:['if "price" in text:','if text.price:','if text == "price":','if text.has("price"):'],a:0,why:"The in operator tests whether a substring appears in a string."},
+    {t:"txt",q:"Which Python function reads what the user types into the chatbot? Type its name.",a:["input"],show:"input",why:"input() waits for the user to type and returns the text."},
+    {t:"btn",q:"In a dictionary chatbot, what is the user’s message used as?",code:'replies = {"hi": "hello"}\nmsg = "hi"\nprint(replies[msg])',opts:["The key","The value","The loop","The file"],a:0,why:"The message looks up the matching key, and its value is the bot’s reply."},
+    
+    {t:"txt",q:"Type the output.",code:'print("bot" + "!" * 2)',a:["bot!!"],show:"bot!!",why:"* runs first, so the string becomes !! before the join."},
+    
+    {t:"txt",q:"Type the output.",code:'print("hi bot".replace("bot", "snow"))',a:["hi snow"],show:"hi snow",why:"replace() swaps every match for the new text."}
+  ];
+  var good=["Correct, ho ho!","Right on, jolly job.","Nice one.","Spot on, merry!"];
+  var $=function(id){return document.getElementById(id)};
+  var log=$("log"),inp=$("in"),send=$("send"),form=$("f"),bar=$("bar"),scoreEl=$("score");
+  var i=0,score=0,busy=true;
+
+  for(var k=0;k<Q.length;k++){bar.appendChild(document.createElement("i"))}
+
+  var field=document.createElement("div");field.className="flakes";document.body.appendChild(field);
+  for(var n=0;n<40;n++){
+    var f=document.createElement("div"),s=[4,4,6,8][Math.floor(Math.random()*4)];
+    f.className="flake";
+    f.style.cssText="left:"+(Math.random()*100)+"vw;width:"+s+"px;height:"+s+"px;opacity:"+(0.6+Math.random()*0.4)+";animation-duration:"+(9+Math.random()*9)+"s;animation-delay:-"+(Math.random()*18)+"s;--dx:"+Math.round(Math.random()*80-40)+"px;--y:"+Math.round(Math.random()*90)+"%";
+    document.body.appendChild(f);
+  }
+
+  function say(who,text,code){
+    var d=document.createElement("div");d.className="msg "+who;
+    if(text){var p=document.createElement("p");p.textContent=text;d.appendChild(p)}
+    if(code){var pre=document.createElement("pre");pre.textContent=code;d.appendChild(pre)}
+    log.appendChild(d);log.scrollTop=log.scrollHeight;return d;
+  }
+  function hud(){
+    scoreEl.textContent="Score "+score;
+    var b=bar.children;for(var j=0;j<b.length;j++){b[j].className=j<i?"on":""}
+  }
+  function norm(s){return s.trim().toLowerCase().replace(/^["'.]+|["'()]+$/g,"").replace(/\s+/g," ")}
+  function lock(on){inp.disabled=send.disabled=on;if(!on)inp.focus()}
+
+  function ask(){
+    var q=Q[i];hud();
+    say("bot","Question "+(i+1)+" of "+Q.length+". "+q.q,q.code);
+    if(q.t==="btn"){
+      lock(true);inp.placeholder="Pick a button";
+      var wrap=document.createElement("div");wrap.className="opts";
+      q.opts.forEach(function(o,idx){
+        var b=document.createElement("button");b.type="button";b.className="opt";b.textContent=o;
+        b.onclick=function(){
+          if(busy)return;busy=true;
+          var all=wrap.children;
+          for(var j=0;j<all.length;j++){all[j].disabled=true}
+          all[q.a].classList.add("ok");
+          if(idx!==q.a)b.classList.add("no");
+          say("me",o);reply(idx===q.a,q,q.opts[q.a]);
+        };
+        wrap.appendChild(b);
+      });
+      log.appendChild(wrap);log.scrollTop=log.scrollHeight;busy=false;
+    }else{
+      inp.placeholder="Type your answer";inp.value="";lock(false);busy=false;
+    }
+  }
+  function reply(ok,q,show){
+    if(ok)score++;
+    setTimeout(function(){
+      say("bot",(ok?good[Math.floor(Math.random()*good.length)]:"Not quite. It is "+show+".")+" "+q.why);
+      i++;hud();
+      setTimeout(i<Q.length?ask:finish,900);
+    },450);
+  }
+  function finish(){
+    lock(true);inp.placeholder="Quiz finished";
+    var m=score>=9?"Merry master! You made the nice list.":score>=6?"Nice work, almost on the nice list.":"Keep practicing, Santa believes in you.";
+    say("bot","You scored "+score+" out of "+Q.length+". "+m);
+    var b=document.createElement("button");b.type="button";b.className="go";b.textContent="Play again";
+    b.onclick=start;b.style.alignSelf="flex-start";log.appendChild(b);log.scrollTop=log.scrollHeight;b.focus();
+  }
+  function start(){
+    log.innerHTML="";i=0;score=0;busy=true;hud();
+    say("bot","Ho ho ho, I’m Frosty. I will ask "+Q.length+" short questions about chatbots, Python dictionaries and strings. Type your answer or tap a button.");
+    setTimeout(ask,700);
+  }
+  form.addEventListener("submit",function(e){
+    e.preventDefault();
+    var v=inp.value;if(busy||!v.trim()||Q[i].t!=="txt")return;
+    busy=true;lock(true);inp.value="";
+    var q=Q[i];say("me",v.trim());
+    reply(q.a.indexOf(norm(v))>-1,q,q.show);
+  });
+  start();
+})();
+</script>
+</body>
+</html>
